@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      VIRTUAL_HOST: ${DOCKER_ENV_GRAFANA_HOST}
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: ${DOCKER_ENV_GRAFANA_HOST}
+      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
+      HTTPS_METHOD: noredirect
+    depends_on:
+      - loki
+    volumes:
+      - ./grafana_data:/var/lib/grafana rw
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    environment:
+      VIRTUAL_HOST: ${DOCKER_ENV_LOKI_HOST}
+      VIRTUAL_PORT: 3100
+      LETSENCRYPT_HOST: ${DOCKER_ENV_LOKI_HOST}
+      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
+      HTTPS_METHOD: noredirect
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml rw
+      - ./loki_data:/var/lib/loki rw
+      - ./loki_config:/etc/loki rw
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    name: monitoring
+
+volumes:
+  grafana_data:
+  loki_data:
+  loki_config:

@@ -1,0 +1,4 @@
+.env
+/grafana_data
+/loki_config
+/loki_data
