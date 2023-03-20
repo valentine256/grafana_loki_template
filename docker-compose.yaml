@@ -1,27 +1,14 @@
-version: "3.8"
+version: "3"
+
+networks:
+  loki:
+    name: loki
+  nginx-proxy:
+    name: nginx-proxy
 
 services:
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
-      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
-      VIRTUAL_HOST: ${DOCKER_ENV_GRAFANA_HOST}
-      VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: ${DOCKER_ENV_GRAFANA_HOST}
-      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
-      HTTPS_METHOD: noredirect
-    depends_on:
-      - loki
-    volumes:
-      - ./grafana_data:/var/lib/grafana rw
-    networks:
-      - monitoring
-
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.7.3
     ports:
       - "3100:3100"
     environment:
@@ -31,18 +18,44 @@ services:
       LETSENCRYPT_EMAIL: smartnanumi@kakao.com
       HTTPS_METHOD: noredirect
     command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - ./loki-config.yaml:/etc/loki/local-config.yaml rw
-      - ./loki_data:/var/lib/loki rw
-      - ./loki_config:/etc/loki rw
     networks:
-      - monitoring
+      - loki
+      - nginx-proxy
 
-networks:
-  monitoring:
-    name: monitoring
-
-volumes:
-  grafana_data:
-  loki_data:
-  loki_config:
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      VIRTUAL_HOST: ${DOCKER_ENV_GRAFANA_HOST}
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: ${DOCKER_ENV_GRAFANA_HOST}
+      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
+      HTTPS_METHOD: noredirect
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+      - nginx-proxy
