@@ -1,4 +1,5 @@
 .env
+!.env.sample
 /grafana_data
 /loki_config
 /loki_data
