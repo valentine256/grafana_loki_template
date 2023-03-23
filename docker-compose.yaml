@@ -15,8 +15,7 @@ services:
       VIRTUAL_HOST: ${DOCKER_ENV_LOKI_HOST}
       VIRTUAL_PORT: 3100
       LETSENCRYPT_HOST: ${DOCKER_ENV_LOKI_HOST}
-      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
-      HTTPS_METHOD: noredirect
+      LETSENCRYPT_EMAIL: ${DOCKER_ENV_EMAIL}
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - loki
@@ -29,8 +28,7 @@ services:
       VIRTUAL_HOST: ${DOCKER_ENV_GRAFANA_HOST}
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: ${DOCKER_ENV_GRAFANA_HOST}
-      LETSENCRYPT_EMAIL: smartnanumi@kakao.com
-      HTTPS_METHOD: noredirect
+      LETSENCRYPT_EMAIL: ${DOCKER_ENV_EMAIL}
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
